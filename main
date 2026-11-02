@@ -1,8 +1,375 @@
+
 <!DOCTYPE html>
 <html lang="en">
-<title>Minimal Starter</title>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hit Determination Calculator</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #1b1d22;
+    color: white;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 750px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+    font-size: 25px;
+}
+
+.panel {
+    background: #292c33;
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+h2 {
+    font-size: 17px;
+    margin-top: 0;
+    color: #b8c9e8;
+}
+
+label {
+    display: block;
+    margin: 12px 0 6px;
+}
+
+select {
+    width: 100%;
+    padding: 11px;
+    border-radius: 6px;
+    background: #3b3f48;
+    color: white;
+    border: 1px solid #555b67;
+    font-size: 15px;
+}
+
+.check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 13px 0;
+}
+
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #5795ee;
+}
+
+.result {
+    text-align: center;
+    padding: 25px;
+    background: #15171b;
+    border-radius: 10px;
+}
+
+.total {
+    font-size: 55px;
+    font-weight: bold;
+    margin: 10px;
+}
+
+.positive { color: #55d68b; }
+.negative { color: #ff7070; }
+.neutral { color: white; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+td {
+    padding: 9px;
+    border-bottom: 1px solid #444851;
+}
+
+td:last-child {
+    text-align: right;
+    font-weight: bold;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: #414650;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 12px;
+}
+
+button:hover {
+    background: #555c68;
+}
+
+.small {
+    color: #aab0bb;
+    font-size: 12px;
+}
+</style>
+</head>
 
 <body>
-    <h1>Hello World</h1>
-    <p>This is all you need to start building.</p>
+
+<div class="container">
+
+<h1>HIT DETERMINATION TABLE</h1>
+
+<div class="panel">
+<h2>1. Firing Information</h2>
+
+<label>Guns Firing</label>
+<select id="guns">
+    <option value="0">1–3</option>
+    <option value="1" selected>4–6</option>
+    <option value="2">7–9</option>
+    <option value="3">10–12</option>
+    <option value="4">13</option>
+</select>
+
+<label>Range in Hexes</label>
+<select id="range">
+    <option value="0">1</option>
+    <option value="1" selected>2</option>
+    <option value="2">3</option>
+    <option value="3">4</option>
+    <option value="4">5–6</option>
+    <option value="5">7–10</option>
+</select>
+</div>
+
+<div class="panel">
+<h2>2. Crew Quality</h2>
+
+<select id="crew">
+    <option value="0">EL – Excellent</option>
+    <option value="1">CR – Crack</option>
+    <option value="2" selected>AV – Average</option>
+    <option value="3">GR – Green</option>
+    <option value="4">PR – Poor</option>
+</select>
+</div>
+
+<div class="panel">
+<h2>3. Hit Table Modifiers</h2>
+
+<div class="check">
+<input type="checkbox" id="loss">
+<label for="loss">Crew Section Loss</label>
+</div>
+
+<div class="check">
+<input type="checkbox" id="broadside">
+<label for="broadside">Initial Broadside</label>
+</div>
+
+<div class="check">
+<input type="checkbox" id="rake">
+<label for="rake">Rake</label>
+</div>
+
+<div class="check">
+<input type="checkbox" id="cap">
+<label for="cap">Cap Ship</label>
+</div>
+</div>
+
+<div class="panel">
+<h2>4. Ammunition</h2>
+
+<select id="ammo">
+    <option value="none">None</option>
+    <option value="gp">GP</option>
+    <option value="ch">CH</option>
+    <option value="ds">DS</option>
+    <option value="rs">RS</option>
+</select>
+
+<div class="check">
+<input type="checkbox" id="anchor">
+<label for="anchor">All Anchor</label>
+</div>
+</div>
+
+<div class="panel">
+<h2>5. Calculation</h2>
+
+<div class="result">
+    <div class="small">TOTAL HIT MODIFIER</div>
+    <div class="total neutral" id="total">0</div>
+</div>
+
+<table>
+<tbody id="breakdown"></tbody>
+</table>
+
+<button onclick="resetCalculator()">Reset Calculator</button>
+</div>
+
+</div>
+
+<script>
+
+// HIT DETERMINATION TABLE DATA
+
+const data = [
+{
+    range: [1,1,0,-1,-2,-3],
+    crew: [1,-1,0,0,-1],
+    loss: -1,
+    broadside: 1,
+    rake: 1,
+    cap: -2,
+    ammo: {gp:-1,ch:1,ds:1,rs:0},
+    anchor: 1
+},
+{
+    range: [2,2,1,0,-1,-2],
+    crew: [2,1,0,0,-1],
+    loss: -1,
+    broadside: 1,
+    rake: 2,
+    cap: -2,
+    ammo: {gp:-2,ch:1,ds:1,rs:0},
+    anchor: 1
+},
+{
+    range: [3,2,1,0,-1,-2],
+    crew: [2,2,0,-1,-1],
+    loss: -1,
+    broadside: 2,
+    rake: 3,
+    cap: -2,
+    ammo: {gp:-3,ch:2,ds:2,rs:0},
+    anchor: 1
+},
+{
+    range: [4,3,2,1,0,-1],
+    crew: [2,2,0,-1,-2],
+    loss: -1,
+    broadside: 2,
+    rake: 4,
+    cap: -2,
+    ammo: {gp:-4,ch:2,ds:2,rs:0},
+    anchor: 2
+},
+{
+    range: [5,4,3,2,1,0],
+    crew: [3,2,0,-1,-2],
+    loss: -1,
+    broadside: 2,
+    rake: 5,
+    cap: -2,
+    ammo: {gp:-4,ch:2,ds:3,rs:0},
+    anchor: 2
+}
+];
+
+// FORMAT NUMBERS
+
+function format(n) {
+    return n > 0 ? "+" + n : String(n);
+}
+
+// CALCULATE RESULT
+
+function calculate() {
+
+    const g = Number(document.getElementById("guns").value);
+    const r = Number(document.getElementById("range").value);
+    const c = Number(document.getElementById("crew").value);
+
+    const d = data[g];
+
+    let items = [
+        ["Range", d.range[r]],
+        ["Crew Quality", d.crew[c]],
+        ["Crew Section Loss", document.getElementById("loss").checked ? d.loss : 0],
+        ["Initial Broadside", document.getElementById("broadside").checked ? d.broadside : 0],
+        ["Rake", document.getElementById("rake").checked ? d.rake : 0],
+        ["Cap Ship", document.getElementById("cap").checked ? d.cap : 0]
+    ];
+
+    const ammunition = document.getElementById("ammo").value;
+
+    items.push([
+        "Ammunition",
+        ammunition === "none" ? 0 : d.ammo[ammunition]
+    ]);
+
+    items.push([
+        "All Anchor",
+        document.getElementById("anchor").checked ? d.anchor : 0
+    ]);
+
+    const total = items.reduce((sum, item) => sum + item[1], 0);
+
+    // DISPLAY TOTAL
+
+    const totalElement = document.getElementById("total");
+
+    totalElement.textContent = format(total);
+
+    totalElement.className = "total " +
+        (total > 0 ? "positive" :
+        total < 0 ? "negative" : "neutral");
+
+    // DISPLAY BREAKDOWN
+
+    document.getElementById("breakdown").innerHTML =
+        items.map(item => `
+            <tr>
+                <td>${item[0]}</td>
+                <td>${format(item[1])}</td>
+            </tr>
+        `).join("") +
+        `<tr>
+            <td><strong>TOTAL</strong></td>
+            <td><strong>${format(total)}</strong></td>
+        </tr>`;
+}
+
+// RESET ALL SETTINGS
+
+function resetCalculator() {
+    document.getElementById("guns").value = "1";
+    document.getElementById("range").value = "1";
+    document.getElementById("crew").value = "2";
+    document.getElementById("ammo").value = "none";
+
+    ["loss","broadside","rake","cap","anchor"]
+        .forEach(id => document.getElementById(id).checked = false);
+
+    calculate();
+}
+
+// AUTOMATIC UPDATES
+
+document.querySelectorAll("select, input")
+    .forEach(element => {
+        element.addEventListener("change", calculate);
+    });
+
+calculate();
+
+</script>
+
 </body>
+</html>
